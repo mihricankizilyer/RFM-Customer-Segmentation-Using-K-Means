@@ -171,6 +171,8 @@ promising             24.44    99      1.00    99   355.35    99
 # 5. K-Means
 ################################
 
+# Dataframe is reloaded without segmentation in here.
+
 # Convert data between 0-1 with MinMaxScaler to avoid measurement problems.
 sc = MinMaxScaler((0, 1))
 df = sc.fit_transform(rfm)
@@ -339,5 +341,13 @@ promising             24.44    99      1.00    99   355.35    99
 7          8   86.28   238      1.36   238  1037.70   238
 8          9   96.05   483      1.11   483   228.37   483
 9         10  247.47   248      2.42   248  1555.98   248
+"""
+
+
+"""
+Result: While performing segmentation in RFM, evaluation was made 
+by considering recency and frequency values. While doing K-means, 
+calculations were made by considering all the variables. In addition, 
+clusters showed a more regular distribution in k_mean.
 """
 
