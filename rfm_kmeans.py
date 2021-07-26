@@ -5,12 +5,14 @@
 # 1. Import & Reading
 # 2. Data Understanding
 # 3. Data Preparation
-# 4. Calculating RFM Metrics
-# 5. K-Means
-# 6. Visualization of Clusters
-# 7. Determining the Optimum Number of Clusters
-# 8. Creating Final Clusters
-# 9. Comparison of Scores for RFM Divided by KMeans and Segments
+# 4. RFM Metrics
+# 5 Calculating RFM Scores
+# 6. Creating & Analysing RFM Segments
+# 7. K-Means
+# 8. Visualization of Clusters
+# 9. Determining the Optimum Number of Clusters
+# 10. Creating Final Clusters
+# 11. Comparison of Scores for RFM Divided by KMeans and Segments
 
 #######################
 # 1. Import & Reading
@@ -108,7 +110,7 @@ rfm.columns = ["Recency", "Frequency", "Monetary"]
 rfm = rfm[rfm["Monetary"] > 0]
 
 #######################
-# 5. Calculating RFM Scores
+# 5 Calculating RFM Scores
 #######################
 
 # The lowest recency value is the most valuable
@@ -168,7 +170,7 @@ promising             24.44    99      1.00    99   355.35    99
 """
 
 ################################
-# 5. K-Means
+# 7. K-Means
 ################################
 
 # Dataframe is reloaded without segmentation in here.
@@ -191,7 +193,7 @@ k_fit.labels_ # Labels belonging to 8 clusters
 k_fit.inertia_ # total error value # total SSE value
 
 ################################
-# 6. Visualization of Clusters
+# 8. Visualization of Clusters
 ################################
 
 k_means = KMeans(n_clusters=2).fit(df)
@@ -227,7 +229,7 @@ plt.show()
 # eg there are 40 dimensions Reduce size with PCA, reduce to two prime components after reduction
 
 ################################
-# 7. Determining the Optimum Number of Clusters
+# 9. Determining the Optimum Number of Clusters
 ################################
 
 # !pip install -U yellowbrick
@@ -306,7 +308,7 @@ cluster_no Recency       Frequency       Monetary
 9         10  247.47   248      2.42   248  1555.98   248
 """
 ################################
-# 9. Comparison of Scores for RFM Divided by KMeans and Segments
+# 10. Comparison of Scores for RFM Divided by KMeans and Segments
 ################################
 
 # SEGMENT
