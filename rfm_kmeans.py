@@ -1,4 +1,4 @@
-########################################
+#######################################
 # RFM Customer Segmentation Using K-Means
 #######################################
 
@@ -104,6 +104,69 @@ rfm = df.groupby("Customer ID").agg({"InvoiceDate": lambda date: (today_date - d
 # Column names changed
 rfm.columns = ["Recency", "Frequency", "Monetary"]
 
+# values that are zero are discarded
+rfm = rfm[rfm["Monetary"] > 0]
+
+#######################
+# 5. Calculating RFM Scores
+#######################
+
+# The lowest recency value is the most valuable
+# So in order from largest to smallest
+rfm["recency_score"] = pd.qcut(rfm["Recency"], 5, labels = [5, 4, 3, 2, 1])
+
+# Higher frequency indicates more frequent shopping.
+# Sort from smallest to largest
+# If the same quarter is still observed when going to different quarters after sorting, mehtod first is used because this causes a problem.
+# duplicates -> gives value error
+rfm["frequency_score"] = pd.qcut(rfm["Frequency"].rank(method="first"), 5, labels = [1,2,3,4,5])
+
+# A high Monetary value indicates that the total amount paid is high.
+# Sort from smallest to largest
+rfm["monetary_score"] = pd.qcut(rfm["Monetary"], 5, labels = [1,2,3,4,5])
+
+rfm["RFM_SCORE"] = rfm["recency_score"].astype(str) + rfm["frequency_score"].astype(str)
+
+#######################
+# 6. Creating & Analysing RFM Segments
+#######################
+
+# Defining RFM scores as segments
+segment_map = {
+    r'[1-2][1-2]': 'Hibernating',
+    r'[1-2][3-4]': 'At_Risk',
+    r'[1-2]5': 'Cant_Loose',
+    r'3[1-2]': 'About_to_Sleep',
+    r'33': 'Need_Attention',
+    r'[3-4][4-5]': 'Loyal_Customers',
+    r'41': 'Promising',
+    r'51': 'New_Customers',
+    r'[4-5][2-3]': 'Potential_Loyalists',
+    r'5[4-5]': 'Champions'
+}
+
+# Regular expression: r'[1-2]->recency [1-2]->frequency => r'[1-2][1-2] => gives naming according to values
+rfm["segment"] = rfm["RFM_SCORE"].replace(seg_map, regex = True)
+
+# The metrics created at the beginning are selected, not the scores
+rfm[["segment", "Recency", "Frequency", "Monetary"]].groupby("segment").agg(["mean", "count"])
+
+"""
+                   Recency       Frequency       Monetary      
+                       mean count      mean count     mean count
+segment                                                         
+Hibernating          218.90  1065      1.10  1065   487.71  1065
+about_to_sleep        54.50   351      1.16   351   461.06   351
+at_Risk              156.06   580      2.87   580  1076.51   580
+cant_loose           133.43    63      8.38    63  2796.16    63
+champions              6.88   633     12.42   633  6857.96   633
+loyal_customers       34.47   827      6.46   827  2856.72   827
+need_attention        54.06   186      2.33   186   889.23   186
+new_customers          7.86    42      1.00    42   388.21    42
+potential_loyalists   18.12   492      2.01   492  1034.91   492
+promising             24.44    99      1.00    99   355.35    99
+"""
+
 ################################
 # 5. K-Means
 ################################
@@ -165,6 +228,8 @@ plt.show()
 # 7. Determining the Optimum Number of Clusters
 ################################
 
+# !pip install -U yellowbrick
+
 # model object
 kmeans = KMeans()
 
@@ -210,7 +275,7 @@ elbow.elbow_value_ # 6
 # 8. Creating Final Clusters
 ################################
 
-kmeans = KMeans(n_clusters=elbow.elbow_value_).fit(df)
+kmeans = KMeans(n_clusters=10).fit(df)
 
 clusters_ = kmeans.labels_ # cluster numbers
 
@@ -218,46 +283,61 @@ pd.DataFrame({"States": df.index, "clusters_": clusters_})
 
 rfm["cluster_no"] = clusters_
 # cluster_ids are set to start from 1
-rfm["cluster_no"] = df["cluster_no"] + 1
+rfm["cluster_no"] = rfm["cluster_no"] + 1
 rfm.head(10)
 
+# Grouping by cluster recency, frequency, monetary
+rfm.groupby("cluster_no").agg(['mean', "count"]).reset_index()
+
+"""
+cluster_no Recency       Frequency       Monetary      
+                mean count      mean count     mean count
+0          1    6.77   571     13.33   571  7852.57   571
+1          2  107.93   399      3.82   399  1576.20   399
+2          3   19.19   291      1.24   291   259.58   291
+3          4  279.33   609      1.06   609   246.45   609
+4          5   33.84   664      7.13   664  3456.84   664
+5          6   17.41   487      2.76   487   758.60   487
+6          7   68.63   348      2.46   348   474.55   348
+7          8   86.28   238      1.36   238  1037.70   238
+8          9   96.05   483      1.11   483   228.37   483
+9         10  247.47   248      2.42   248  1555.98   248
+"""
 ################################
 # 9. Comparison of Scores for RFM Divided by KMeans and Segments
 ################################
 
+# SEGMENT
 """
-             Recency  Frequency  Monetary  cluster_no
-Customer ID                                          
-12346.00         327          1  77183.60           2
-12347.00           3          7   4310.00           1
-12348.00          76          4   1797.24           4
-12349.00          20          1   1757.55           1
-12350.00         311          1    334.40           2
-12352.00          37          8   2506.04           1
-12353.00         205          1     89.00           3
-12354.00         233          1   1079.40           3
-12355.00         215          1    459.40           3
-12356.00          24          3   2811.43           1
-"""
-
-"""
-           monetory_score RFM_SCORE              segment  
-Customer ID                                                
-12346.00                 5        11           hibreating  
-12347.00                 5        55            champions  
-12348.00                 4        24              at_Risk  
-12349.00                 4        41            promising  
-12350.00                 2        11           hibreating  
-12352.00                 5        35      loyal_customers  
-12353.00                 1        11           hibreating  
-12354.00                 4        11           hibreating  
-12355.00                 2        11           hibreating  
-12356.00                 5        43  potential_loyalists  
-
+                   Recency       Frequency       Monetary      
+                       mean count      mean count     mean count
+segment                                                         
+Hibernating          218.90  1065      1.10  1065   487.71  1065
+about_to_sleep        54.50   351      1.16   351   461.06   351
+at_Risk              156.06   580      2.87   580  1076.51   580
+cant_loose           133.43    63      8.38    63  2796.16    63
+champions              6.88   633     12.42   633  6857.96   633
+loyal_customers       34.47   827      6.46   827  2856.72   827
+need_attention        54.06   186      2.33   186   889.23   186
+new_customers          7.86    42      1.00    42   388.21    42
+potential_loyalists   18.12   492      2.01   492  1034.91   492
+promising             24.44    99      1.00    99   355.35    99
 """
 
+# K-MEANS
 
-
-
-
+"""
+ cluster_no Recency       Frequency       Monetary      
+                mean count      mean count     mean count
+0          1    6.77   571     13.33   571  7852.57   571
+1          2  107.93   399      3.82   399  1576.20   399
+2          3   19.19   291      1.24   291   259.58   291
+3          4  279.33   609      1.06   609   246.45   609
+4          5   33.84   664      7.13   664  3456.84   664
+5          6   17.41   487      2.76   487   758.60   487
+6          7   68.63   348      2.46   348   474.55   348
+7          8   86.28   238      1.36   238  1037.70   238
+8          9   96.05   483      1.11   483   228.37   483
+9         10  247.47   248      2.42   248  1555.98   248
+"""
 
