@@ -152,7 +152,7 @@ rfm["segment"] = rfm["RFM_SCORE"].replace(seg_map, regex = True)
 rfm[["segment", "Recency", "Frequency", "Monetary"]].groupby("segment").agg(["mean", "count"])
 
 """
-                   Recency       Frequency       Monetary      
+                         Recency       Frequency       Monetary      
                        mean count      mean count     mean count
 segment                                                         
 Hibernating          218.90  1065      1.10  1065   487.71  1065
@@ -327,7 +327,7 @@ promising             24.44    99      1.00    99   355.35    99
 # K-MEANS
 
 """
- cluster_no Recency       Frequency       Monetary      
+ cluster_no       Recency       Frequency       Monetary      
                 mean count      mean count     mean count
 0          1    6.77   571     13.33   571  7852.57   571
 1          2  107.93   399      3.82   399  1576.20   399
